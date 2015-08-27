@@ -12,7 +12,7 @@ static void HandleError( cudaError_t err, const char *file, int line )
     }
 }
 
-
+// otro comentario random
 
 const short N = 10 ;
 
