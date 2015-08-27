@@ -12,7 +12,7 @@ void vecAdd(int *vec1,int *vec2,int *vec3)
    vec3[i] = vec1[i] + vec2[i];   
   }  
 }
-
+// comentario random
 void initialize(int *vec1,int *vec2)
 {
   int i;
