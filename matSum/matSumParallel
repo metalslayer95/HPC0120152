@@ -1,0 +1,83 @@
+# define COL 5
+# define ROW 10
+#include "malloc.h"
+#include "time.h"
+#include "stdio.h"
+#include "stdlib.h"
+
+
+static void HandleError( cudaError_t err, const char *file, int line )
+{
+  if (err != cudaSuccess)
+  {
+    printf( "%s in %s at line %d\n", cudaGetErrorString( err ),
+           file, line );
+    exit( EXIT_FAILURE );
+  }
+}
+
+
+// CUDA Kernel for Vector Addition
+__global__ void Matrix_Addition ( const float *dev_a , const float *dev_b , float *dev_c)
+{
+  //Get the id of thread within a block
+  //unsigned short tid = threadIdx.x 
+  int col = blockIdx.x*blockDim.x+threadIdx.x;
+  int row = blockIdx.y*blockDim.y+threadIdx.y;
+  int index = col + row * N;
+
+  if ( index < COL*ROW ) // check the boundry condition for the threads
+    dev_c [index] = dev_a[index] + dev_b[index] ;
+
+}
+
+
+void initialize(int *vec1,int *vec2)
+{
+  int i;
+ 	srand(time(NULL));
+  for ( i = 0; i< COL*ROW; i++)
+  {
+  	vec1[i] = rand() % (1+10-0) + 0;
+  	vec2[i] = rand() % (1+20-0) + 0;
+  }
+}
+
+void printAdd(int *a,int *b,int *c)
+{
+   int i;
+  for ( i = COL*ROW - 5; i < COL*ROW ; i++)
+  { 
+  	printf("%d + %d = %d\n",a[i],b[i],c[i]);
+  } 
+}
+
+main () 
+{
+  int *a,*b,*c;
+  clock_t begin, end;
+	double time_spent;
+  dim3 grid(16,16); // grid = 16 x 16 blocks
+	dim3 block(100,1); 
+	a = NULL;
+  b = NULL;
+  c = NULL;
+  a = (int *) malloc ( sizeof(int) * COL*ROW);
+  b = (int *) malloc ( sizeof(int) * COL*ROW);
+  c = (int *) malloc ( sizeof(int) * COL*ROW);
+  initialize(a,b);
+  begin = clock();
+  //Allocate the memory on the GPU
+  HANDLE_ERROR ( cudaMalloc((void **)&dev_a , N*sizeof(float) ) );
+  HANDLE_ERROR ( cudaMalloc((void **)&dev_b , N*sizeof(float) ) );
+  HANDLE_ERROR ( cudaMalloc((void **)&dev_c , N*sizeof(float) ) );
+  //matAdd(a,b,c);
+  
+  end = clock();
+  printAdd(a,b,c);
+  time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+  printf("Se ha demorado %f segundos.\n",time_spent);
+  free(a);
+  free(b);
+  free(c);
+}
