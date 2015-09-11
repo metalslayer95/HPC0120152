@@ -1,6 +1,5 @@
-# define COL 2
-# define ROW 5
-# define N 10
+# define COL 5
+# define ROW 10
 # define BLOCK_DIM 512
 #include "malloc.h"
 #include "time.h"
@@ -20,13 +19,15 @@ static void HandleError( cudaError_t err, const char *file, int line )
 
 
 // CUDA Kernel for Vector Addition
-__global__ void matrix_Addition ( const int *dev_a , const int *dev_b , int *dev_c)
+__global__ void Matrix_Addition ( const int *dev_a , const int *dev_b , int *dev_c)
 {
+  //Get the id of thread within a block
+  //unsigned short tid = threadIdx.x 
   int col = blockIdx.x*blockDim.x+threadIdx.x;
   int row = blockIdx.y*blockDim.y+threadIdx.y;
-  int index = col + row * N;
+  int index = col + row * ROW;
 
-  if ( col < N && row < N) // check the boundry condition for the threads
+  if ( col < COL && row < ROW) // check the boundry condition for the threads
     dev_c [index] = dev_a[index] + dev_b[index] ;
 
 }
@@ -36,7 +37,7 @@ void initialize(int *vec1,int *vec2)
 {
   int i;
  	srand(time(NULL));
-  for ( i = 0; i< N*N; i++)
+  for ( i = 0; i< COL*ROW; i++)
   {
   	vec1[i] = rand() % (1+10-0) + 0;
   	vec2[i] = rand() % (1+10-0) + 0;
@@ -46,7 +47,7 @@ void initialize(int *vec1,int *vec2)
 void printAdd(int *a,int *b,int *c)
 {
    int i;
-  for ( i = 0; i < N*N ; i++)
+  for ( i = 0; i < COL*ROW ; i++)
   { 
   	printf("%d + %d = %d\n",a[i],b[i],c[i]);
   } 
@@ -63,28 +64,28 @@ main ()
 	Host_a = NULL;
   Host_b = NULL;
   Host_c = NULL;
-  Host_a = (int *) malloc ( sizeof(int) * N*N);
-  Host_b = (int *) malloc ( sizeof(int) * N*N);
-  Host_c = (int *) malloc ( sizeof(int) * N*N);
+  Host_a = (int *) malloc ( sizeof(int) * COL*ROW);
+  Host_b = (int *) malloc ( sizeof(int) * COL*ROW);
+  Host_c = (int *) malloc ( sizeof(int) * COL*ROW);
   initialize(Host_a,Host_b);
   //Allocate the memory on the GPU
-  HANDLE_ERROR ( cudaMalloc((void **)&dev_a , N*N*sizeof(int) ) );
-  HANDLE_ERROR ( cudaMalloc((void **)&dev_b , N*N*sizeof(int) ) );
-  HANDLE_ERROR ( cudaMalloc((void **)&dev_c , N*N*sizeof(int) ) );
+  HANDLE_ERROR ( cudaMalloc((void **)&dev_a , COL*ROW*sizeof(float) ) );
+  HANDLE_ERROR ( cudaMalloc((void **)&dev_b , COL*ROW*sizeof(float) ) );
+  HANDLE_ERROR ( cudaMalloc((void **)&dev_c , COL*ROW*sizeof(float) ) );
  	dim3 dimBlock(COL, ROW);
-	dim3 dimGrid((int)ceil((float)N/(float)dimBlock.x),(int)ceil((float)N/(float)dimBlock.y));
+	dim3 dimGrid((int)ceil(COL*ROW/dimBlock.x),(int)ceil(COL*ROW/dimBlock.y));
   begin = clock();
   //Copy Host array to Device array
-  HANDLE_ERROR (cudaMemcpy (dev_a , Host_a , N*N*sizeof(int) , cudaMemcpyHostToDevice));
-  HANDLE_ERROR (cudaMemcpy (dev_b , Host_b , N*N*sizeof(int) , cudaMemcpyHostToDevice));
+  HANDLE_ERROR (cudaMemcpy (dev_a , Host_a , COL*ROW*sizeof(float) , cudaMemcpyHostToDevice));
+  HANDLE_ERROR (cudaMemcpy (dev_b , Host_b , COL*ROW*sizeof(float) , cudaMemcpyHostToDevice));
 
 
   //Make a call to GPU kernel
-  matrix_Addition <<< dimGrid, dimBlock  >>> (dev_a , dev_b , dev_c ) ;
+  Matrix_Addition <<< dimGrid, dimBlock  >>> (dev_a , dev_b , dev_c ) ;
 
 
   //Copy back to Host array from Device array
-  HANDLE_ERROR (cudaMemcpy(Host_c , dev_c , N*sizeof(int) , cudaMemcpyDeviceToHost));
+  HANDLE_ERROR (cudaMemcpy(Host_c , dev_c , COL*ROW*sizeof(float) , cudaMemcpyDeviceToHost));
 
   end = clock();
   printAdd(Host_a,Host_b,Host_c);

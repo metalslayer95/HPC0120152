@@ -1,0 +1,72 @@
+# define COL 2
+# define ROW 3
+#include "malloc.h"
+#include "time.h"
+#include "stdio.h"
+#include "stdlib.h"
+
+void matAdd(int *vec1,int *vec2,int *vec3)
+{
+  int i,j,z;
+  int sum = 0;
+  int m;
+  int n;
+  for ( i = 0 ; i < COL ; i++)
+  {
+    for ( j = 0; j < ROW ; j++)
+    {
+      for ( z = 0; z < COL ; z++)
+      {
+        m = vec1[i * COL + z];
+        n = vec2[z*COL + i];
+        sum += m * n;
+      }
+      vec3[i*COL+j] = sum;
+      sum = 0;
+    } 
+  }  
+}
+
+
+void initialize(int *vec1,int *vec2)
+{
+  int i;
+ 	srand(time(NULL));
+  for ( i = 0; i< COL*ROW; i++)
+  {
+  	vec1[i] = i;//rand() % (1+10-0) + 0;
+  	vec2[i] = i;//rand() % (1+20-0) + 0;
+  }
+}
+
+void printTimes(int *a,int *b,int *c)
+{
+   int i;
+  for ( i =0; i < COL*ROW ; i++)
+  { 
+  	printf("%d\n",c[i]);
+  } 
+}
+
+main () 
+{
+  int *a,*b,*c;
+  clock_t begin, end;
+	double time_spent;
+	a = NULL;
+  b = NULL;
+  c = NULL;
+  a = (int *) malloc ( sizeof(int) * COL*ROW);
+  b = (int *) malloc ( sizeof(int) * COL*ROW);
+  c = (int *) malloc ( sizeof(int) * COL*ROW);
+  initialize(a,b);
+  begin = clock();
+  matAdd(a,b,c);
+  end = clock();
+  printTimes(a,b,c);
+  time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+  printf("Se ha demorado %f segundos.\n",time_spent);
+  free(a);
+  free(b);
+  free(c);
+}
