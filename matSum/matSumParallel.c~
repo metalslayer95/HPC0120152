@@ -84,7 +84,7 @@ main ()
 
 
   //Copy back to Host array from Device array
-  HANDLE_ERROR (cudaMemcpy(Host_c , dev_c , N*N*sizeof(int) , cudaMemcpyDeviceToHost));
+  HANDLE_ERROR (cudaMemcpy(Host_c , dev_c , N*sizeof(int) , cudaMemcpyDeviceToHost));
 
   end = clock();
   printAdd(Host_a,Host_b,Host_c);

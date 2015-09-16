@@ -23,18 +23,6 @@ void matAdd(int *vec1,int  *vec2,int *vec3)
     }
 }
 
-void multi(int *matA, int *matB, int *matC){
-	int i, j, k, cont;
-	for(i=0;i<ROWA;i++){
-		for(j=0;j<COLB;j++){
-			cont=0;
-			for(k=0;k<COLA;k++){
-				cont+= matA[i*COLA+k]*matB[k*COLB+j];
-			}
-			matC[i*COLB+j]=cont;
-		}
-	}
-}
 
 void initialize(int *vec1,int *vec2)
 {

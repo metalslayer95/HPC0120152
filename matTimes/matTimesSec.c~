@@ -16,7 +16,7 @@ void matAdd(int *vec1,int  *vec2,int *vec3)
         for (j = 0; j < COLB; j++) {
             aux = 0;
             for (k = 0; k < COLA; k++) {
-              	aux += vec1[j + i * COLA] * vec2[j+ k * COLB];
+              	aux += vec1[k + i * COLA] * vec2[j+ k * COLB];
             }
           	vec3[i*COLB + j] = aux;
         }
@@ -25,13 +25,13 @@ void matAdd(int *vec1,int  *vec2,int *vec3)
 
 void multi(int *matA, int *matB, int *matC){
 	int i, j, k, cont;
-	for(i=0;i<filasA;i++){
-		for(j=0;j<columB;j++){
+	for(i=0;i<ROWA;i++){
+		for(j=0;j<COLB;j++){
 			cont=0;
-			for(k=0;k<columA;k++){
-				cont+= matA[i*columA+k]*matB[k*columB+j];
+			for(k=0;k<COLA;k++){
+				cont+= matA[i*COLA+k]*matB[k*COLB+j];
 			}
-			matC[i*columB+j]=cont;
+			matC[i*COLB+j]=cont;
 		}
 	}
 }
