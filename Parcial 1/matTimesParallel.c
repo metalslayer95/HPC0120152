@@ -92,7 +92,7 @@ main ()
   HANDLE_ERROR ( cudaMalloc((void **)&dev_b , Br*Bc*sizeof(int) ) );
   HANDLE_ERROR ( cudaMalloc((void **)&dev_c , Ar*Bc*sizeof(int) ) );
   dim3 dimBlock(32, 32,1);
-  dim3 dimGrid((int)ceil((float)N/(float)dimBlock.x),(int)ceil((float)N/(float)dimBlock.y),1);
+  dim3 dimGrid((int)ceil((float)Ar/(float)dimBlock.x),(int)ceil((float)Bc/(float)dimBlock.y),1);
   begin = clock();
  //Copy Host array to Device array
   HANDLE_ERROR (cudaMemcpy (dev_a , Host_a , Ar*Ac*sizeof(int) , cudaMemcpyHostToDevice));
