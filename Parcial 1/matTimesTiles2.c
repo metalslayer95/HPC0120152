@@ -3,14 +3,11 @@
 #include "stdio.h"
 #include "cuda.h"
 #include "stdlib.h"
-#define N 20
-#define ACols 5
-#define BRows 5
-#define BCols 10
-#define ARows 10
-#define TILE_DIM 3
+#define N 9
+#define M 6
+#define TILE_DIM 32
 #define HANDLE_ERROR( err ) ( HandleError( err, __FILE__, __LINE__ ) )
-# define BLOCK_DIM 6
+# define BLOCK_DIM 30
 
 static void HandleError( cudaError_t err, const char *file, int line )
 {
@@ -22,7 +19,7 @@ static void HandleError( cudaError_t err, const char *file, int line )
   }
 }
 
-__global__ void MatMul(float* A, float* B, float* C, int CRows, int CCols) {
+__global__ void MatMul(float* A, float* B, float* C, int ARows, int ACols, int BRows, int BCols, int CRows, int CCols) {
 
     float CValue = 0;
 
@@ -34,15 +31,11 @@ __global__ void MatMul(float* A, float* B, float* C, int CRows, int CCols) {
 
     for (int k = 0; k < (TILE_DIM + ACols - 1)/TILE_DIM; k++) {
 
-         if (k*TILE_DIM + threadIdx.x < ACols && Row < ARows)   
-           As[threadIdx.y][threadIdx.x] = A[Row*ACols + k*TILE_DIM + threadIdx.x];
-         else                                                   
-           As[threadIdx.y][threadIdx.x] = 0.0;
+         if (k*TILE_DIM + threadIdx.x < ACols && Row < ARows)   As[threadIdx.y][threadIdx.x] = A[Row*ACols + k*TILE_DIM + threadIdx.x];
+         else                                                   As[threadIdx.y][threadIdx.x] = 0.0;
 
-         if (k*TILE_DIM + threadIdx.y < BRows && Col < BCols)   
-           Bs[threadIdx.y][threadIdx.x] = B[(k*TILE_DIM + threadIdx.y)*BCols + Col];
-         else                                                   
-           Bs[threadIdx.y][threadIdx.x] = 0.0;
+         if (k*TILE_DIM + threadIdx.y < BRows && Col < BCols)   Bs[threadIdx.y][threadIdx.x] = B[(k*TILE_DIM + threadIdx.y)*BCols + Col];
+         else                                                   Bs[threadIdx.y][threadIdx.x] = 0.0;
 
          __syncthreads();
 
@@ -51,7 +44,7 @@ __global__ void MatMul(float* A, float* B, float* C, int CRows, int CCols) {
          __syncthreads();
     }
 
-    if (Row < CRows && Col < CCols) C[((blockIdx.y * blockDim.y + threadIdx.y)*CCols)+(blockIdx.x*blockDim.x)+threadIdx.x]=CValue;
+    if (Row < CRows && Col < CCols) C[Row*CCols+Col] = CValue;//C[((blockIdx.y * blockDim.y + threadIdx.y)*CCols)+(blockIdx.x*blockDim.x)+threadIdx.x]=CValue;
 }
 
 
@@ -71,22 +64,22 @@ __global__ void matrix_Multiplication( const float *dev_a , const float *dev_b ,
   }
 }
 
-void initialize(float *vec1, int n , int m)
+void initialize(float *vec1,float *vec2, int rows, int cols)
 {
-  int i;
-  //printf("Reach\n");
+  int i;printf("Reach\n");
 
  	srand(time(NULL));
-  for ( i = 0; i< n*m; i++)
+  for ( i = 0; i< rows*cols; i++)
   {
   	vec1[i] = 1.0;//rand() % (1+10-0) + 0;
+  	vec2[i] = 1.0;//rand() % (1+20-0) + 0;
   }
 }
 
 void printTimes(float *a,float *b,float *c)
 {
-   int i,aux = ARows*BCols-5;
-  for ( i = 0; i < ARows*BCols ; i++) 
+   int i;
+  for ( i = N*N-5; i < N*N ; i++) // ROW * ROW
   { 
   	printf("%d = %f\n",i,c[i]);
   } 
@@ -102,31 +95,30 @@ main ()
   Host_a = NULL;
   Host_b = NULL;
   Host_c = NULL;
-  Host_a = (float *) malloc ( sizeof(float) * ACols*ARows);
-  Host_b = (float *) malloc ( sizeof(float) * BCols*BRows);
-  Host_c = (float *) malloc ( sizeof(float) * ARows*BCols);
-  initialize(Host_a,ACols,ARows);
-  initialize(Host_b,BCols,BRows);
+  Host_a = (float *) malloc ( sizeof(float) * N*M);
+  Host_b = (float *) malloc ( sizeof(float) * M*N);
+  Host_c = (float *) malloc ( sizeof(float) * N*N);
+  initialize(Host_a,Host_b, N, M);
   //Allocate the memory on the GPU
-  //printf("Reach\n");
+  printf("Reach\n");
 
-  HANDLE_ERROR ( cudaMalloc((void **)&dev_a , ACols*ARows*sizeof(float) ) );
-  HANDLE_ERROR ( cudaMalloc((void **)&dev_b , BCols*BRows*sizeof(float) ) );
-  HANDLE_ERROR ( cudaMalloc((void **)&dev_c , ARows*BCols*sizeof(float) ) );
+  HANDLE_ERROR ( cudaMalloc((void **)&dev_a , N*M*sizeof(float) ) );
+  HANDLE_ERROR ( cudaMalloc((void **)&dev_b , M*N*sizeof(float) ) );
+  HANDLE_ERROR ( cudaMalloc((void **)&dev_c , N*N*sizeof(float) ) );
   dim3 dimBlock(TILE_DIM, TILE_DIM,1);
   dim3 dimGrid((int)ceil((float)N/(float)dimBlock.x),(int)ceil((float)N/(float)dimBlock.y),1);
   begin = clock();
  //Copy Host array to Device array
-  HANDLE_ERROR (cudaMemcpy (dev_a , Host_a , ACols*ARows*sizeof(float) , cudaMemcpyHostToDevice));
-  HANDLE_ERROR (cudaMemcpy (dev_b , Host_b , BCols*BRows*sizeof(float) , cudaMemcpyHostToDevice));
+  HANDLE_ERROR (cudaMemcpy (dev_a , Host_a , N*M*sizeof(float) , cudaMemcpyHostToDevice));
+  HANDLE_ERROR (cudaMemcpy (dev_b , Host_b , M*N*sizeof(float) , cudaMemcpyHostToDevice));
 
 
   //Make a call to GPU kernel
   //matrix_Multiplication_Tiles <<< dimGrid, dimBlock  >>> (dev_a , dev_b , dev_c ) ;
-	MatMul <<< dimGrid,dimBlock >>> (dev_a,dev_b,dev_c,ARows,BCols);
+	MatMul <<< dimGrid,dimBlock >>> (dev_a,dev_b,dev_c,N,M,M,N,N,N);
 
   //Copy back to Host array from Device array
-  HANDLE_ERROR (cudaMemcpy(Host_c , dev_c , ARows*BCols*sizeof(float) , cudaMemcpyDeviceToHost));
+  HANDLE_ERROR (cudaMemcpy(Host_c , dev_c , N*N*sizeof(float) , cudaMemcpyDeviceToHost));
 
   end = clock();
   printTimes(Host_a,Host_b,Host_c);
