@@ -4,10 +4,10 @@
 #include "cuda.h"
 #include "stdlib.h"
 #define N 3
-#define Ar 20
-#define Ac 5
-#define Br 5
-#define Bc 20
+#define Ar 60
+#define Ac 100
+#define Br 100
+#define Bc 60
 #define HANDLE_ERROR( err ) ( HandleError( err, __FILE__, __LINE__ ) )
 # define BLOCK_DIM 512
 
@@ -109,7 +109,7 @@ main ()
   end = clock();
   printTimes(Host_a,Host_b,Host_c);
   time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-  printf("Se ha demorado %f segundos.\n",time_spent);
+  printf("%f\n",time_spent);
   free(Host_a);
   free(Host_b);
   free(Host_c);

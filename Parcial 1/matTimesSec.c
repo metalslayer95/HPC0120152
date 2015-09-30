@@ -3,9 +3,9 @@
 #include "stdio.h"
 #include "stdlib.h"
 
-int  COLA = 3;
-int  ROWA = 2;
-int COLB = 2;
+int  COLA = 100;
+int  ROWA = 50;
+int COLB = 50;
 int ROWB = COLA;
 
 void matAdd(int *vec1,int  *vec2,int *vec3)
@@ -30,7 +30,7 @@ void initialize(int *vec1,int *vec2)
  	srand(time(NULL));
   for ( i = 0; i< COLA*ROWA; i++)
   {
-  	vec1[i] = i;//rand() % (1+10-0) + 0;
+  	vec1[i] = 1;//rand() % (1+10-0) + 0;
   	vec2[i] = 1;//rand() % (1+20-0) + 0;
   }
 }
@@ -38,7 +38,7 @@ void initialize(int *vec1,int *vec2)
 void printTimes(int *a,int *b,int *c)
 {
    int i;
-  for ( i =0; i < COLB*ROWA ; i++) // ROW * ROW
+  for ( i =COLB*ROWA - 5; i < COLB*ROWA ; i++) // ROW * ROW
   { 
   	printf("%d = %d\n",i,c[i]);
   } 
@@ -61,7 +61,7 @@ main ()
   end = clock();
   printTimes(a,b,c);
   time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-  printf("Se ha demorado %f segundos.\n",time_spent);
+  printf("%f.\n",time_spent);
   free(a);
   free(b);
   free(c);

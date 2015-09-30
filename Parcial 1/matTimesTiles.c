@@ -4,11 +4,11 @@
 #include "cuda.h"
 #include "stdlib.h"
 #define N 20
-#define ACols 5
-#define BRows 5
-#define BCols 10
-#define ARows 10
-#define TILE_DIM 3
+#define ACols 100
+#define BRows 100
+#define BCols 60
+#define ARows 60
+#define TILE_DIM 32
 #define HANDLE_ERROR( err ) ( HandleError( err, __FILE__, __LINE__ ) )
 # define BLOCK_DIM 6
 
@@ -86,7 +86,7 @@ void initialize(float *vec1, int n , int m)
 void printTimes(float *a,float *b,float *c)
 {
    int i,aux = ARows*BCols-5;
-  for ( i = 0; i < ARows*BCols ; i++) 
+  for ( i = aux; i < ARows*BCols ; i++) 
   { 
   	printf("%d = %f\n",i,c[i]);
   } 
@@ -114,7 +114,7 @@ main ()
   HANDLE_ERROR ( cudaMalloc((void **)&dev_b , BCols*BRows*sizeof(float) ) );
   HANDLE_ERROR ( cudaMalloc((void **)&dev_c , ARows*BCols*sizeof(float) ) );
   dim3 dimBlock(TILE_DIM, TILE_DIM,1);
-  dim3 dimGrid((int)ceil((float)N/(float)dimBlock.x),(int)ceil((float)N/(float)dimBlock.y),1);
+  dim3 dimGrid((int)ceil((float)ARows/(float)dimBlock.x),(int)ceil((float)BCols/(float)dimBlock.y),1);
   begin = clock();
  //Copy Host array to Device array
   HANDLE_ERROR (cudaMemcpy (dev_a , Host_a , ACols*ARows*sizeof(float) , cudaMemcpyHostToDevice));
@@ -131,7 +131,7 @@ main ()
   end = clock();
   printTimes(Host_a,Host_b,Host_c);
   time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-  printf("Se ha demorado %f segundos.\n",time_spent);
+  printf("%f\n",time_spent);
   free(Host_a);
   free(Host_b);
   free(Host_c);
