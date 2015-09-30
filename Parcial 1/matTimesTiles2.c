@@ -3,8 +3,10 @@
 #include "stdio.h"
 #include "cuda.h"
 #include "stdlib.h"
-#define N 9
-#define M 6
+#define Ac 9
+#define Br 9
+#define Ar 6
+#define Bc 6
 #define TILE_DIM 32
 #define HANDLE_ERROR( err ) ( HandleError( err, __FILE__, __LINE__ ) )
 # define BLOCK_DIM 30
@@ -95,30 +97,30 @@ main ()
   Host_a = NULL;
   Host_b = NULL;
   Host_c = NULL;
-  Host_a = (float *) malloc ( sizeof(float) * N*M);
-  Host_b = (float *) malloc ( sizeof(float) * M*N);
-  Host_c = (float *) malloc ( sizeof(float) * N*N);
-  initialize(Host_a,Host_b, N, M);
+  Host_a = (float *) malloc ( sizeof(float) * Ac*Ar);
+  Host_b = (float *) malloc ( sizeof(float) * Br*Bc);
+  Host_c = (float *) malloc ( sizeof(float) * Ar*Bc);
+  initialize(Host_a,Host_b, A, M);
   //Allocate the memory on the GPU
   printf("Reach\n");
 
-  HANDLE_ERROR ( cudaMalloc((void **)&dev_a , N*M*sizeof(float) ) );
-  HANDLE_ERROR ( cudaMalloc((void **)&dev_b , M*N*sizeof(float) ) );
-  HANDLE_ERROR ( cudaMalloc((void **)&dev_c , N*N*sizeof(float) ) );
+  HANDLE_ERROR ( cudaMalloc((void **)&dev_a , Ac*Ar*sizeof(float) ) );
+  HANDLE_ERROR ( cudaMalloc((void **)&dev_b , Bc*Br*sizeof(float) ) );
+  HANDLE_ERROR ( cudaMalloc((void **)&dev_c , Ar*Bc*sizeof(float) ) );
   dim3 dimBlock(TILE_DIM, TILE_DIM,1);
   dim3 dimGrid((int)ceil((float)N/(float)dimBlock.x),(int)ceil((float)N/(float)dimBlock.y),1);
   begin = clock();
  //Copy Host array to Device array
-  HANDLE_ERROR (cudaMemcpy (dev_a , Host_a , N*M*sizeof(float) , cudaMemcpyHostToDevice));
-  HANDLE_ERROR (cudaMemcpy (dev_b , Host_b , M*N*sizeof(float) , cudaMemcpyHostToDevice));
+  HANDLE_ERROR (cudaMemcpy (dev_a , Host_a , Ac*Ar*sizeof(float) , cudaMemcpyHostToDevice));
+  HANDLE_ERROR (cudaMemcpy (dev_b , Host_b , Bc*Br*sizeof(float) , cudaMemcpyHostToDevice));
 
 
   //Make a call to GPU kernel
   //matrix_Multiplication_Tiles <<< dimGrid, dimBlock  >>> (dev_a , dev_b , dev_c ) ;
-	MatMul <<< dimGrid,dimBlock >>> (dev_a,dev_b,dev_c,N,M,M,N,N,N);
+	MatMul <<< dimGrid,dimBlock >>> (dev_a,dev_b,dev_c,Ar,Ac,Br,Bc,Ar,Bc);
 
   //Copy back to Host array from Device array
-  HANDLE_ERROR (cudaMemcpy(Host_c , dev_c , N*N*sizeof(float) , cudaMemcpyDeviceToHost));
+  HANDLE_ERROR (cudaMemcpy(Host_c , dev_c , Ar*Bc*sizeof(float) , cudaMemcpyDeviceToHost));
 
   end = clock();
   printTimes(Host_a,Host_b,Host_c);
