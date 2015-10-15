@@ -4,7 +4,7 @@
 #include "cuda.h"
 #include "stdlib.h"
 #define Ar 4
-#define Ac 4
+#define Ac 5
 #define HANDLE_ERROR( err ) ( HandleError( err, __FILE__, __LINE__ ) )
 
 static void HandleError( cudaError_t err, const char *file, int line )
@@ -21,15 +21,24 @@ __global__ void matSum(int *dev_a){
   
 	int row = blockIdx.y*blockDim.y+threadIdx.y;    
 	int col = blockIdx.x*blockDim.x+threadIdx.x;   
-  int index  = row * Ac + col;   
-  int index2 = (row+((Ac)/2)) * Ac + col; 
-  //printf("%d\t",index);
-	if((index < (Ar*Ac+1)/2) && (index2 < Ar*Ac) ){
+  int index  = row * Ac + col; 
+  int index2,lim;
+  if(Ar*Ac % 2 == 0)
+  {
+   	lim = Ar*Ac/2;
+    index2 = ((row * Ac + col))+(((Ar*Ac))/2);
+  }
+  else
+  {
+    lim = ((Ar*Ac)+1)/2;
+    index2 = ((row * Ac + col))+(((Ar*Ac)+1)/2); 
+  }
+    //printf("%d\t",index);
+  if((index < lim)){ //&& (index2 < lim*2)){
  			 printf("%d %d\t",dev_a[index2],index2);
-    	 printf("\n");
-				dev_a[index] = dev_a[index]+dev_a[index2];
+    	 //printf("\n");
+			 dev_a[index] = dev_a[index]+dev_a[index2];
 			}
-
 }
 
 
