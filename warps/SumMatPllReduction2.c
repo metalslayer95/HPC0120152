@@ -3,13 +3,9 @@
 #include "stdio.h"
 #include "cuda.h"
 #include "stdlib.h"
-#define N 3
-#define Ar 60
-#define Ac 100
-#define Br 100
-#define Bc 60
+#define Ar 4
+#define Ac 4
 #define HANDLE_ERROR( err ) ( HandleError( err, __FILE__, __LINE__ ) )
-# define BLOCK_DIM 512
 
 static void HandleError( cudaError_t err, const char *file, int line )
 {
@@ -21,37 +17,21 @@ static void HandleError( cudaError_t err, const char *file, int line )
   }
 }
 
-__global__ void matMulti(int *dev_a, int *dev_b, int *dev_c){
+__global__ void matSum(int *dev_a){
   
 	int row = blockIdx.y*blockDim.y+threadIdx.y;    
 	int col = blockIdx.x*blockDim.x+threadIdx.x;   
-	int cont,k;
-  
-  
-	if(( row < Ar ) && ( col < Bc )){
-		cont=0;
-			for( k = 0 ; k < Ac ; k++){
-				cont+= dev_a[row * Ac + k]*dev_b[ k * Bc + col];
+  int index  = row * Ac + col;   
+  int index2 = (row+((Ac)/2)) * Ac + col; 
+  //printf("%d\t",index);
+	if((index < (Ar*Ac+1)/2) && (index2 < Ar*Ac) ){
+ 			 printf("%d %d\t",dev_a[index2],index2);
+    	 printf("\n");
+				dev_a[index] = dev_a[index]+dev_a[index2];
 			}
-			dev_c[ row * Bc + col] = cont;
-	}
+
 }
 
-// CUDA Kernel for Vector Addition
-__global__ void matrix_Multiplication( const int *dev_a , const int *dev_b , int *dev_c)
-{
-  int col = blockIdx.x*blockDim.x+threadIdx.x;
-  int row = blockIdx.y*blockDim.y+threadIdx.y;
-  if ( col < N && row < N) // check the boundry condition for the threads
-  {
-			int Pvalue = 0;
-     for(int k = 0 ; k < N ; k++ )
-     {
-        Pvalue+= dev_a[row * N + k ] * dev_b[k*N+ col];
-     }
-  		dev_c[row * N + col] = Pvalue;
-  }
-}
 
 void initialize(int *vec1,int n, int m)
 {
@@ -63,54 +43,44 @@ void initialize(int *vec1,int n, int m)
   }
 }
 
-void printTimes(int *a,int *b,int *c)
+void print(int *vec)
 {
-   int i;
-  for ( i = Bc*Ar-5; i < Bc*Ar ; i++) // ROW * ROW
-  { 
-  	printf("%d = %d\n",i,c[i]);
-  } 
+  int i;
+  for ( i = 0 ; i < Ac*Ar;i++)
+    printf("%d\n",vec[i]);
+  
 }
 
 main () 
 {
-  int *Host_a,*Host_b,*Host_c;
-  int *dev_a,*dev_b,*dev_c;
+  int *Host_a;
+  int *dev_a;
   clock_t begin, end;
   double time_spent;
 
   Host_a = NULL;
-  Host_b = NULL;
-  Host_c = NULL;
   Host_a = (int *) malloc ( sizeof(int) * Ar*Ac);
-  Host_b = (int *) malloc ( sizeof(int) * Br*Bc);
-  Host_c = (int *) malloc ( sizeof(int) * Ar*Bc);
   initialize(Host_a,Ar,Ac);
-  initialize(Host_b,Br,Bc);
   //Allocate the memory on the GPU
   HANDLE_ERROR ( cudaMalloc((void **)&dev_a , Ar*Ac*sizeof(int) ) );
-  HANDLE_ERROR ( cudaMalloc((void **)&dev_b , Br*Bc*sizeof(int) ) );
-  HANDLE_ERROR ( cudaMalloc((void **)&dev_c , Ar*Bc*sizeof(int) ) );
-  dim3 dimBlock(32, 32,1);
-  dim3 dimGrid((int)ceil((float)Ar/(float)dimBlock.x),(int)ceil((float)Bc/(float)dimBlock.y),1);
+  dim3 dimBlock(Ar,Ac,1);
+  dim3 dimGrid((int)ceil((float)Ar/(float)dimBlock.x),(int)ceil((float)Ac/(float)dimBlock.y),1);
+  //dim3 dimGrid(32,32,1);
   begin = clock();
  //Copy Host array to Device array
   HANDLE_ERROR (cudaMemcpy (dev_a , Host_a , Ar*Ac*sizeof(int) , cudaMemcpyHostToDevice));
-  HANDLE_ERROR (cudaMemcpy (dev_b , Host_b , Br*Bc*sizeof(int) , cudaMemcpyHostToDevice));
 
 
   //Make a call to GPU kernel
-  matMulti <<< dimGrid, dimBlock  >>> (dev_a , dev_b , dev_c ) ;
+  matSum <<< dimGrid, dimBlock  >>> (dev_a ) ;
 
 
   //Copy back to Host array from Device array
-  HANDLE_ERROR (cudaMemcpy(Host_c , dev_c , Ar*Bc*sizeof(int) , cudaMemcpyDeviceToHost));
+  HANDLE_ERROR (cudaMemcpy(Host_a , dev_a , Ar*Ac*sizeof(int) , cudaMemcpyDeviceToHost));
 
   end = clock();
-  printTimes(Host_a,Host_b,Host_c);
+  print(Host_a);
   time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
   printf("%f\n",time_spent);
   free(Host_a);
-  free(Host_b);
-  free(Host_c);
 }
