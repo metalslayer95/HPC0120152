@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-void inicializador(int *vec)
+void inicializador(int *vector,int tamano)
 {
 	int contador=0;
 
@@ -19,18 +19,17 @@ int suma(int tamano){
 	srand (time(NULL)); 
 
 	int *vector=NULL;
-	vector=(int *) malloc (sizeof(int)*tamano-1);
+	vector=(int *) malloc (sizeof(int)*tamano);
 
-
-
+	inicializador(vector,tamano);
 	begin = clock();
 
 	int cont=0;
 	int resultado=0;
 	if (tamano % 2 != 0)
-	resultado = vector[tamano-1];
+	resultado = vector[tamano];
 	
-	for(cont=0;cont < tamano-1; cont=cont+2)
+	for(cont=0;cont < tamano; cont=cont+2)
 	{  	
 		resultado= vector[0+cont] + vector [1+cont]+resultado;
 		
@@ -39,12 +38,8 @@ int suma(int tamano){
 	end = clock();
 	time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 			printf("Se ha demorado %f segundos.\n",time_spent);
-	  
-	int contador1=0;
-	/*for(contador1=0;contador1 <= tamano-1; contador1=contador1+1)
-	{
-	printf("%d\n", vector[contador1]);
-	}*/
+
+
 	printf("%d\n", resultado);
 
 	free(vector);
