@@ -1,7 +1,7 @@
 # include <bits/stdc++.h>
 # include <cuda.h>
 
-#define SIZE 60000000// Global Size
+#define SIZE 600000000// Global Size
 #define BLOCK_SIZE 1024
 using namespace std;
 
@@ -9,7 +9,7 @@ using namespace std;
 
 // :::: Kernel
 
-__global__ void KernelNormalVec(double *g_idata,double *g_odata,int l){ // Sequential Addressing technique
+__global__ void vecSum(double *g_idata,double *g_odata,int l){ // Sequential Addressing technique
 
   __shared__ double sdata[BLOCK_SIZE];
   // each thread loads one element from global to shared mem
@@ -34,7 +34,7 @@ __global__ void KernelNormalVec(double *g_idata,double *g_odata,int l){ // Seque
 }
 
 // :::: Calls
-void d_VectorMult(double *Vec1,double *Total){
+void d_VectorMult(double *vec1,double *Total){
   double * d_Vec1;
   double * d_Total;
   double Blocksize=BLOCK_SIZE; // Block of 1Dim
@@ -42,8 +42,7 @@ void d_VectorMult(double *Vec1,double *Total){
   cudaMalloc((void**)&d_Vec1,SIZE*sizeof(double));
   cudaMalloc((void**)&d_Total,SIZE*sizeof(double));
 
-  cudaMemcpy(d_Vec1,
-    Vec1,SIZE*sizeof(double),cudaMemcpyHostToDevice);
+  cudaMemcpy(d_Vec1,vec1,SIZE*sizeof(double),cudaMemcpyHostToDevice);
 
     cudaMemcpy(d_Total,Total,SIZE*sizeof(double),cudaMemcpyHostToDevice);
 
@@ -54,7 +53,7 @@ void d_VectorMult(double *Vec1,double *Total){
       int grid=ceil(temp/Blocksize);
       dim3 dimGrid(grid,1,1);
 
-      KernelNormalVec<<<dimGrid,dimBlock>>>(d_Vec1,d_Total,temp);
+      vecSum<<<dimGrid,dimBlock>>>(d_Vec1,d_Total,temp);
       cudaDeviceSynchronize();
 
       cudaMemcpy(d_Vec1,d_Total,SIZE*sizeof(double),cudaMemcpyDeviceToDevice);
@@ -69,36 +68,32 @@ void d_VectorMult(double *Vec1,double *Total){
 
   //::::::::::::::::::::::::::::::::::::::::::CPU::::::::::::::::::::::::::::::::
 
-  void h_sum_vec(double *Vec1, double *all){
-    for(int i=0;i<SIZE;i++) *all+=Vec1[i];
+  void h_sum_vec(double *vec1, double *all){
+    for(int i=0;i<SIZE;i++) *all+=vec1[i];
   }
 
   //:::::::::::::::::::::::::::: Rutinary Functions
 
-  void Fill_vec(double *Vec,double Value){
-    for(int i =0 ; i<SIZE ; i++) Vec[i]=Value;
+  void fill_Vec(double *vec,double Value){
+    for(int i =0 ; i<SIZE ; i++) vec[i]=Value;
   }
 
-  void Show_vec(double *Vec){
+  void Show_vec(double *vec){
     for (int i=0;i<SIZE;i++){
       if(i%10==0 && i!=0){
         cout<<endl;
       }
-      cout<<"["<<Vec[i]<<"] ";
+      cout<<"["<<vec[i]<<"] ";
     }
     cout<<endl;
   }
 
-  void Checksum(double *Answer1 , double  *Answer2){
-    if(fabs(Answer1[0]-Answer2[0]) < 0.1) cout<<"Nice Work Guy"<<endl;
-    else  cout<<"BAD Work Guy"<<endl;
-  }
 
 
   // :::::::::::::::::::::::::::::::::::Clock Function::::::::::::::::::::::::::::
   double diffclock(clock_t clock1,clock_t clock2){
     double diffticks=clock2-clock1;
-    double diffms=(diffticks)/(CLOCKS_PER_SEC/1); // /1000 mili
+    double diffms=(diffticks)/(CLOCKS_PER_SEC); // /1000 mili
     return diffms;
   }
 
@@ -106,34 +101,30 @@ void d_VectorMult(double *Vec1,double *Total){
 
 int main(){
 
-    double T1,T2; // Time flags
-    double *Vec1 = (double*)malloc((SIZE)*sizeof(double)); // Elements to compute. CPU way
-    double *Total2 = (double*)malloc((SIZE)*sizeof(double)); // GPU
-    double *Total1 = (double*)malloc(sizeof(double)); // Total Variables.
+    double T1,T2; 
+    double *vec1 = (double*)malloc((SIZE)*sizeof(double)); // Elements to compute. CPU way
+    double *total2 = (double*)malloc((SIZE)*sizeof(double)); // GPU
+    double *total1 = (double*)malloc(sizeof(double)); // Total Variables.
 
-    // Fill the containers vectors of data
-    Fill_vec(Vec1,1.0);
-    Fill_vec(Total2,0.0);
+    fill_Vec(vec1,1.0);
+    fill_Vec(total2,0.0);
 
-    // Register time to finish the algorithm
     // Secuential
     clock_t start = clock();
-    h_sum_vec(Vec1,Total1);
+    h_sum_vec(vec1,total1);
     clock_t end = clock();
     T1=diffclock(start,end);
-    cout<<"Serial Result: "<<*Total1<<" At "<<T1<<",Seconds"<<endl;
+    cout<<"Resultado secuencial: "<<*total1<<" en "<<T1<<",segundos"<<endl;
     // Parallel
     start = clock();
-    d_VectorMult(Vec1,Total2);
+    d_VectorMult(vec1,total2);
     end = clock();
     T2=diffclock(start,end);
-    cout<<"Parallel Result: "<<Total2[0]<<" At "<<T2<<",Seconds"<<endl;
-    cout<<"Total Acceleration: "<<T1/T2<<",X"<<endl;
-    Checksum(Total1,Total2);
-    // releasing Memory
+    cout<<"Resultado en paralelo: "<<total2[0]<<" en "<<T2<<",segundos"<<endl;
+    cout<<"Aceleracion total: "<<T1/T2<<",X"<<endl;
 
-    free(Vec1);
-    free(Total2);
+    free(vec1);
+    free(total2);
 
     return 0;
 }
