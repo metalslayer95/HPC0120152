@@ -144,16 +144,6 @@ void Show_vec(int *Vec,int Elements,char * Msg ){
   cout<<endl;
 }
 
-int Check_op(int *A , int *B){
-    for(unsigned int i=0; i<N_elements;i++){
-        if(A[i]!=B[i]){
-          cout<<"Bad Work D:"<<endl;
-          return 0;
-        }
-    }
-    cout<<"Nice Work :D"<<endl;
-    return 1;
-}
 
 // :::::::::::::::::::::::::::::::::::Clock Function::::::::::::::::::::::::::::
 double diffclock(clock_t clock1,clock_t clock2){
@@ -177,13 +167,10 @@ int main(){
   Fill_elements(Mask,1,Mask_size);
 
   start = clock();
-  //Show_vec(VecIn1,N_elements,(char *)"Vector In");
-  //Show_vec(Mask,Mask_size,(char *)"Mask");
 	h_Convolution_1d(VecIn1,VecOut1,Mask);
   end = clock();
   T1=diffclock(start,end);
-  cout<<"Serial Result"<<" At "<<T1<<",Seconds"<<endl;
-  //Show_vec(VecOut1,N_elements,(char *)"Vector Out");
+  cout<<"SEcuencial"<<" a "<<T1<<",segundos"<<endl;
 
   start = clock();
   d_convolution1d(VecIn1,VecOut2,Mask,3); // 1 --> List of kernels
@@ -192,7 +179,6 @@ int main(){
   cout<<"Resultado en paralelo"<<" es "<<T2<<",segundos"<<endl;
   //Show_vec(VecOut2,N_elements,(char *)"Vector Out");
   cout<<"Aceleracion total "<<T1/T2<<" Veces "<<endl;
-  Check_op(VecOut1,VecOut2);
 
   // Releasing Memory
 
