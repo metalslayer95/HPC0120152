@@ -6,10 +6,9 @@
 
 using namespace cv;
 
-/** @function main */
-int main( )
+int sobel_Filter()
 {
-
+  
   clock_t begin, end;
   Mat src, src_gray;
   Mat grad;
@@ -18,7 +17,6 @@ int main( )
   int delta = 0;
   int ddepth = CV_16S;
 
-  int c;
   /// Generate grad_x and grad_y
   Mat grad_x, grad_y;
   Mat abs_grad_x, abs_grad_y;
@@ -52,9 +50,14 @@ int main( )
   end = clock();
   time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
   printf("%f\n",time_spent);
-   imwrite("./outputs/1088328019.png",grad);
+  imwrite("./outputs/1088328019.png",grad);
+  return 0;
+}
 
-  waitKey(0);
-
+int main( )
+{
+	int i;
+  for ( i = 0 ; i < 20 ; i++)
+    sobel_Filter();
   return 0;
   }
