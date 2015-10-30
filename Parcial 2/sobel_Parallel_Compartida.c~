@@ -103,7 +103,7 @@ void sobel_Operator(Mat image,unsigned char *In,unsigned char *h_Out,int mask_Wi
 	int tamano_RGB = sizeof(unsigned char)*Row*Col*image.channels();
 	int tamano_Gris = sizeof(unsigned char)*Row*Col; // sin canales alternativos
 	int tamano_Mascara = sizeof(char)*(MASK_SIZE*MASK_SIZE);
-	unsigned char *d_In,*d_Out,*d_sobelOut,*d_sobelOut_x,*d_sobelOut_y;
+	unsigned char *d_In,*d_Out_y,*d_sobelOut,*d_sobelOut_x,*d_sobelOut_y;
 	char *d_Mask;
 	float blocksize=BLOCKSIZE;
 	// Memory Allocation in device

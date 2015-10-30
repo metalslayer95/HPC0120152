@@ -10,7 +10,7 @@
 #include "stdlib.h"
 #define MASK_SIZE 3
 #define BLOCKSIZE 32
-
+#define HANDLE_ERROR( err ) ( HandleError( err, __FILE__, __LINE__ ) )
 using namespace std;
 
 using namespace cv;
@@ -24,6 +24,17 @@ __device__ unsigned char in_Range(int value){
 		if(value > 255)
 			value = 255;
 	return value;
+}
+
+
+static void HandleError( cudaError_t err, const char *file, int line )
+{
+  if (err != cudaSuccess)
+  {
+    printf( "%s in %s at line %d\n", cudaGetErrorString( err ),
+           file, line );
+    exit( EXIT_FAILURE );
+  }
 }
 
 
@@ -52,19 +63,33 @@ __global__ void gray(unsigned char *In, unsigned char *Out,int Row, int Col){
 		}
 }
 
+__global__ void union_Imagen(unsigned char *in_x,unsigned char *in_y,unsigned char *out,int Row, int Col){
+        int row = blockIdx.y*blockDim.y+threadIdx.y;
+		int col = blockIdx.x*blockDim.x+threadIdx.x;
+		if((row < Row) && (col < Col)){
+			out[row*Row+col] = in_Range(sqrtf((in_x[row*Row+col]*in_x[row*Row+col])+ (in_y[row*Row+col]*in_y[row*Row+col])));
+			//out[row*Row+col] = in_Range(abs(in_x[row*Row+col]*in_x[row*Row+col])+ abs(in_y[row*Row+col]*in_y[row*Row+col]));
+		}  
+}
+
+
 void sobel_Operator(Mat image,unsigned char *In,unsigned char *h_Out,char *h_Mask,int mask_Width,int Row,int Col){
 	// Variables
 	int tamano_RGB = sizeof(unsigned char)*Row*Col*image.channels();
 	int tamano_Gris = sizeof(unsigned char)*Row*Col; // sin canales alternativos
 	int tamano_Mascara = sizeof(char)*(MASK_SIZE*MASK_SIZE);
-	unsigned char *d_In,*d_Out,*d_sobelOut;
+	unsigned char *d_In,*d_Out,*d_sobelOut,*d_sobelOut_x,*d_sobelOut_y;
 	char *d_Mask;
+	char h_Mask[] = {-1,0,1,-2,0,2,-1,0,1};
+	char h_Mask_y[] = {1,2,1,0,0,0,-1,-2,-1};
 	float blocksize=BLOCKSIZE;
 	// Memory Allocation in device
 	cudaMalloc((void**)&d_In,tamano_RGB);
 	cudaMalloc((void**)&d_Out,tamano_Gris);
 	cudaMalloc((void**)&d_Mask,tamano_Mascara);
 	cudaMalloc((void**)&d_sobelOut,tamano_Gris);
+	cudaMalloc((void**)&d_sobelOut_x,tamano_Gris);
+	cudaMalloc((void**)&d_sobelOut_y,tamano_Gris);
 	// Memcpy Host to device
 	cudaMemcpy(d_In,In,tamano_RGB, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_Mask,h_Mask,tamano_Mascara,cudaMemcpyHostToDevice);
@@ -72,21 +97,25 @@ void sobel_Operator(Mat image,unsigned char *In,unsigned char *h_Out,char *h_Mas
 	dim3 dimBlock(blocksize,blocksize,1);
 	  clock_t start,end;  
 	  float tiempo;
-	  int i;
-	  for(i=0;i<20;i++)
-	  {
+	 //int i;
+	 //for(i=0;i<20;i++)
+	 // {
 		start = clock();
 		gray<<<dimGrid,dimBlock>>>(d_In,d_Out,Row,Col); // pasando a escala de grices.
 		cudaDeviceSynchronize();
 
-		sobel_Constante<<<dimGrid,dimBlock>>>(d_Out,Row,Col,MASK_SIZE,d_sobelOut);
+		sobel_Constante<<<dimGrid,dimBlock>>>(d_Out,Row,Col,MASK_SIZE,d_sobelOut_x);
+ 		cudaDeviceSynchronize();
 
-		cudaMemcpy (h_Out,d_sobelOut,tamano_Gris,cudaMemcpyDeviceToHost);
+	    cudaMemcpy(d_Mask,h_Mask_y,tamano_Mascara,cudaMemcpyHostToDevice);
+		sobel_Constante<<<dimGrid,dimBlock>>>(d_Out,Row,Col,MASK_SIZE,d_sobelOut_y); 
+ 		cudaDeviceSynchronize();          
+		union_Imagen<<<dimGrid,dimBlock>>>(d_sobelOut_x,d_sobelOut_y,d_sobelOut,Row,Col);
+		HANDLE_ERROR (cudaMemcpy (h_Out,d_sobelOut,tamano_Gris,cudaMemcpyDeviceToHost));
 		end = clock();
-
 		tiempo = ((double) (end - start)) / CLOCKS_PER_SEC;
 		printf("%f\n",tiempo);
-	  }
+	//  }
 	cudaFree(d_In);
 	cudaFree(d_Out);
 	cudaFree(d_Mask);

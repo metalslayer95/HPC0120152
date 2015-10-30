@@ -53,7 +53,7 @@ __global__ void union_Imagen(unsigned char *in_x,unsigned char *in_y,unsigned ch
         int row = blockIdx.y*blockDim.y+threadIdx.y;
 		int col = blockIdx.x*blockDim.x+threadIdx.x;
 		if((row < Row) && (col < Col)){
-			out[row*Row+col] = in_Range(sqrtf((in_x[row*Row+col]*in_x[row*Row+col])+ (in_y[row*Row+col]*in_y[row*Row+col])));
+			out[row*Row+col] = in_Range(sqrtf(((in_x[row*Row+col]*in_x[row*Row+col])+ (in_y[row*Row+col]*in_y[row*Row+col]))));
 			//out[row*Row+col] = in_Range(abs(in_x[row*Row+col]*in_x[row*Row+col])+ abs(in_y[row*Row+col]*in_y[row*Row+col]));
 		}  
 }
