@@ -73,7 +73,7 @@ __global__ void union_Imagen(unsigned char *in_x,unsigned char *in_y,unsigned ch
 }
 
 
-void sobel_Operator(Mat image,unsigned char *In,unsigned char *h_Out,char *h_Mask,int mask_Width,int Row,int Col){
+void sobel_Operator(Mat image,unsigned char *In,unsigned char *h_Out,int mask_Width,int Row,int Col){
 	// Variables
 	int tamano_RGB = sizeof(unsigned char)*Row*Col*image.channels();
 	int tamano_Gris = sizeof(unsigned char)*Row*Col; // sin canales alternativos
@@ -92,7 +92,8 @@ void sobel_Operator(Mat image,unsigned char *In,unsigned char *h_Out,char *h_Mas
 	cudaMalloc((void**)&d_sobelOut_y,tamano_Gris);
 	// Memcpy Host to device
 	cudaMemcpy(d_In,In,tamano_RGB, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_Mask,h_Mask,tamano_Mascara,cudaMemcpyHostToDevice);
+	HANDLE_ERROR (cudaMemcpy(d_Mask,h_Mask,tamano_Mascara,cudaMemcpyHostToDevice));
+	HANDLE_ERROR (cudaMemcpyToSymbol(mask,h_Mask,tamano_Mascara));
 	dim3 dimGrid(ceil(Row/blocksize),ceil(Col/blocksize),1);
 	dim3 dimBlock(blocksize,blocksize,1);
 	  clock_t start,end;  
@@ -107,9 +108,13 @@ void sobel_Operator(Mat image,unsigned char *In,unsigned char *h_Out,char *h_Mas
 		sobel_Constante<<<dimGrid,dimBlock>>>(d_Out,Row,Col,MASK_SIZE,d_sobelOut_x);
  		cudaDeviceSynchronize();
 
-	    cudaMemcpy(d_Mask,h_Mask_y,tamano_Mascara,cudaMemcpyHostToDevice);
+
+   	HANDLE_ERROR (cudaMemcpy(d_Mask,h_Mask_y,tamano_Mascara,cudaMemcpyHostToDevice));
+	  HANDLE_ERROR (cudaMemcpyToSymbol(mask,h_Mask_y,tamano_Mascara));
+		
 		sobel_Constante<<<dimGrid,dimBlock>>>(d_Out,Row,Col,MASK_SIZE,d_sobelOut_y); 
- 		cudaDeviceSynchronize();          
+ 		cudaDeviceSynchronize();    
+ 		      
 		union_Imagen<<<dimGrid,dimBlock>>>(d_sobelOut_x,d_sobelOut_y,d_sobelOut,Row,Col);
 		HANDLE_ERROR (cudaMemcpy (h_Out,d_sobelOut,tamano_Gris,cudaMemcpyDeviceToHost));
 		end = clock();
@@ -128,16 +133,15 @@ main ()
 {
 	int mask_Width = MASK_SIZE;
     int Row, Col;
-	char h_Mask[] = {-1,0,1,-2,0,2,-1,0,1};
 	Mat image,result_image;  
-	image = imread("./inputs/img3.jpg");
+	image = imread("./inputs/img6.jpg");
 	Size s = image.size();
 	Row = s.width;
 	Col = s.height;
 	unsigned char * In = (unsigned char*)malloc( sizeof(unsigned char)*Row*Col*image.channels());
 	unsigned char * h_Out = (unsigned char *)malloc( sizeof(unsigned char)*Row*Col);
 	In = image.data;
-	sobel_Operator(image,In,h_Out,h_Mask,mask_Width,Row,Col);
+	sobel_Operator(image,In,h_Out,mask_Width,Row,Col);
 	result_image.create(Col,Row,CV_8UC1);
 	result_image.data = h_Out;
 	imwrite("./outputs/1088328019.png",result_image);
@@ -145,4 +149,3 @@ main ()
 	return 0;
 }
 
-   
