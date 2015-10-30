@@ -92,23 +92,26 @@ void sobel_Operator(Mat image,unsigned char *In,unsigned char *h_Out,char *h_Mas
   //for(i=0;i<20;i++)
   //{
 	start = clock();
-    gray<<<dimGrid,dimBlock>>>(d_In,d_Out,Row,Col); // pasando a escala de grices.
-	cudaDeviceSynchronize();
+  gray<<<dimGrid,dimBlock>>>(d_In,d_Out,Row,Col); // pasando a escala de grices.
+	
+  cudaDeviceSynchronize();
 	
 	sobel_Global<<<dimGrid,dimBlock>>>(d_Out,Row,Col,MASK_SIZE,d_Mask_x,d_sobelOut_x);
-	cudaMemcpy (out_x,d_sobelOut_x,tamano_Gris,cudaMemcpyDeviceToHost);
-	cudaDeviceSynchronize();
-	//convertScaleAbs( out_x, abs_grad_x );
+	
+  cudaDeviceSynchronize();
 	
 	sobel_Global<<<dimGrid,dimBlock>>>(d_Out,Row,Col,MASK_SIZE,d_Mask_y,d_sobelOut_y);
 	cudaMemcpy(out_y,d_sobelOut_y,tamano_Gris,cudaMemcpyDeviceToHost);
-	cudaDeviceSynchronize();
-	//convertScaleAbs( out_y, abs_grad_y );
-    
-	end = clock();
+	
+	cudaMemcpy(h_Out,d_sobelOut_y,tamano_Gris,cudaMemcpyDeviceToHost);
+  cudaDeviceSynchronize();
+
+	cudaMemcpy (out_x,d_sobelOut,tamano_Gris,cudaMemcpyDeviceToHost);    
+	union_Imagen<<<dimGrid,dimBlock>>>(d_sobelOut_x,d_sobelOut_y,d_sobelOut,Row,Col);
+  //cudaDeviceSynchronize();
+	
+  end = clock();
   
-  union_Imagen <<<dimGrid,dimBlock>>>(d_sobelOut_x,d_sobelOut_y,d_sobelOut,Row,Col);
-  cudaMemcpy(h_Out,d_sobelOut,tamano_Gris,cudaMemcpyDeviceToHost);
   tiempo = ((double) (end - start)) / CLOCKS_PER_SEC;
 	printf("%f\n",tiempo);
   //}
@@ -130,7 +133,7 @@ main ()
 	char h_Mask_x[] = {-1,0,1,-2,0,2,-1,0,1};
 	char h_Mask_y[] = {1,2,1,0,0,0,-1,-2,-1};
 	Mat image,result_image;  
-	image = imread("./inputs/img1.jpg");
+	image = imread("./inputs/img5.jpg");
 	Size s = image.size();
 	Row = s.width;
 	Col = s.height;
