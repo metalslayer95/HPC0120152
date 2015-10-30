@@ -40,9 +40,9 @@ __device__ unsigned char in_Range(int valor){
 }
 
 __global__ void union_Imagen(unsigned char *in_x,unsigned char *in_y,unsigned char *out,int Row, int Col){
-        int row = blockIdx.y*blockDim.y+threadIdx.y;
+     int row = blockIdx.y*blockDim.y+threadIdx.y;
 		int col = blockIdx.x*blockDim.x+threadIdx.x;
-		if((row < Row) && (col < Col)){
+		if((row < Col) && (col < Row)){
 			out[row*Row+col] = in_Range(sqrtf((in_x[row*Row+col]*in_x[row*Row+col])+ (in_y[row*Row+col]*in_y[row*Row+col])));
 			//out[row*Row+col] = in_Range(abs(in_x[row*Row+col]*in_x[row*Row+col])+ abs(in_y[row*Row+col]*in_y[row*Row+col]));
 		}  
@@ -130,8 +130,9 @@ void sobel_Operator(Mat image,unsigned char *In,unsigned char *h_Out,int mask_Wi
 
 		sobel_Compartida<<<dimGrid,dimBlock>>>(d_Out,d_sobelOut_x,3,Row,Col);
 		cudaDeviceSynchronize();
-
-	    HANDLE_ERROR (cudaMemcpyToSymbol(mask,h_Mask_y,tamano_Mascara)); 
+		
+	  HANDLE_ERROR (cudaMemcpy(d_Mask,h_Mask_y,tamano_Mascara,cudaMemcpyHostToDevice));
+	  HANDLE_ERROR (cudaMemcpyToSymbol(mask,h_Mask_y,tamano_Mascara)); 
 		sobel_Compartida<<<dimGrid,dimBlock>>>(d_Out,d_sobelOut_y,3,Row,Col);
 		cudaDeviceSynchronize();
 
@@ -154,7 +155,7 @@ main ()
 {
 	int mask_Width = MASK_SIZE;
 	Mat image,result_image;
-	image = imread("./inputs/img1.jpg");
+	image = imread("./inputs/img3.jpg");
 	Size s = image.size();
 	int Row = s.width;
 	int Col = s.height;

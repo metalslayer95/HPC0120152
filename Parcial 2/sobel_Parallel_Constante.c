@@ -66,7 +66,7 @@ __global__ void gray(unsigned char *In, unsigned char *Out,int Row, int Col){
 __global__ void union_Imagen(unsigned char *in_x,unsigned char *in_y,unsigned char *out,int Row, int Col){
         int row = blockIdx.y*blockDim.y+threadIdx.y;
 		int col = blockIdx.x*blockDim.x+threadIdx.x;
-		if((row < Row) && (col < Col)){
+		if((row < Col) && (col < Row)){
 			out[row*Row+col] = in_Range(sqrtf((in_x[row*Row+col]*in_x[row*Row+col])+ (in_y[row*Row+col]*in_y[row*Row+col])));
 			//out[row*Row+col] = in_Range(abs(in_x[row*Row+col]*in_x[row*Row+col])+ abs(in_y[row*Row+col]*in_y[row*Row+col]));
 		}  
@@ -134,7 +134,7 @@ main ()
 	int mask_Width = MASK_SIZE;
     int Row, Col;
 	Mat image,result_image;  
-	image = imread("./inputs/img6.jpg");
+	image = imread("./inputs/img3.jpg");
 	Size s = image.size();
 	Row = s.width;
 	Col = s.height;
