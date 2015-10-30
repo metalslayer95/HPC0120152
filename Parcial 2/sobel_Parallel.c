@@ -4,19 +4,10 @@
 #include "time.h"
 #include "stdio.h"
 #include "cuda.h"
+#include <bits/stdc++.h>
+#include <highgui.h>
+#include <cv.h>
 #include "stdlib.h"
-#define HANDLE_ERROR( err ) ( HandleError( err, __FILE__, __LINE__ ) )
-# define BLOCK_DIM 512
-
-static void HandleError( cudaError_t err, const char *file, int line )
-{
-  if (err != cudaSuccess)
-  {
-    printf( "%s in %s at line %d\n", cudaGetErrorString( err ),
-           file, line );
-    exit( EXIT_FAILURE );
-  }
-}
 #define Mask_size 3
 #define BLOCKSIZE 32
 #define TILE_SIZE 32
@@ -104,12 +95,7 @@ __global__ void sobel_Compartida(unsigned char *In, unsigned char *Out,int maskW
 		if((row < Col) && (col < Row)){
 			Out[row*Row+col] = In[(row*Row+col)*3+2]*0.299 + In[(row*Row+col)*3+1]*0.587+ In[(row*Row+col)*3]*0.114;
 		}
-		}
-		// :::::::::::::::::::::::::::::::::::Clock Function::::::::::::::::::::::::::::
-		double diffclock(clock_t clock1,clock_t clock2){
-		double diffticks=clock2-clock1;
-		double diffms=(diffticks)/(CLOCKS_PER_SEC/1); // /1000 mili
-		return diffms;
+		
 	}
 
 void d_convolution2d(Mat image,unsigned char *In,unsigned char *h_Out,char *h_Mask,int Mask_Width,int Row,int Col,int op){
@@ -132,7 +118,12 @@ void d_convolution2d(Mat image,unsigned char *In,unsigned char *h_Out,char *h_Ma
 	// Thread logic and Kernel call
 	dim3 dimGrid(ceil(Row/Blocksize),ceil(Col/Blocksize),1);
 	dim3 dimBlock(Blocksize,Blocksize,1);
-	gray<<<dimGrid,dimBlock>>>(d_In,d_Out,Row,Col); // pasando a escala de grices.
+  clock_t start,end;  float T1;
+  int i;
+  for(i=0;i<20;i++)
+  {
+	start = clock();
+  gray<<<dimGrid,dimBlock>>>(d_In,d_Out,Row,Col); // pasando a escala de grices.
 	cudaDeviceSynchronize();
 	if(op==1){
 	sobelFilter<<<dimGrid,dimBlock>>>(d_Out,Row,Col,Mask_size,d_Mask,d_sobelOut);
@@ -141,10 +132,15 @@ void d_convolution2d(Mat image,unsigned char *In,unsigned char *h_Out,char *h_Ma
 	sobelFilterConstant<<<dimGrid,dimBlock>>>(d_Out,Row,Col,Mask_size,d_sobelOut);
 	}
 	if(op==3){
-	sobelFilterShared<<<dimGrid,dimBlock>>>(d_Out,d_sobelOut,3,Row,Col);
+	sobel_Compartida<<<dimGrid,dimBlock>>>(d_Out,d_sobelOut,3,Row,Col);
 	}
 	cudaMemcpy (h_Out,d_sobelOut,size_of_Gray,cudaMemcpyDeviceToHost);
-	cudaFree(d_In);
+  end = clock();
+
+    T1= ((double) (end - start)) / CLOCKS_PER_SEC;
+		cout<<T1<<endl;
+  }
+    cudaFree(d_In);
 	cudaFree(d_Out);
 	cudaFree(d_Mask);
 	cudaFree(d_sobelOut);
@@ -154,34 +150,23 @@ void d_convolution2d(Mat image,unsigned char *In,unsigned char *h_Out,char *h_Ma
 
 main () 
 {
-	 double T1,T2; // Time flags
-	clock_t start,end;// Time flags
 	int Mask_Width = Mask_size;
+  int Row, Col;
 	char h_Mask[] = {-1,0,1,-2,0,2,-1,0,1};
-	Mat image,result_image;
-	image = imread("./inputs/img1.jpg");
+	Mat image,result_image;  
+	image = imread("./inputs/img3.jpg");
 	Size s = image.size();
-	int Row = s.width;
-	int Col = s.height;
+	Row = s.width;
+	Col = s.height;
 	unsigned char * In = (unsigned char*)malloc( sizeof(unsigned char)*Row*Col*image.channels());
 	unsigned char * h_Out = (unsigned char *)malloc( sizeof(unsigned char)*Row*Col);
 	In = image.data;
-	start = clock();
-	d_convolution2d(image,In,h_Out,h_Mask,Mask_Width,Row,Col,3);
-	end = clock();
-	T1=diffclock(start,end);
-	cout<<" Result Parallel"<<" At "<<T1<<",Seconds"<<endl;
-	Mat gray_image_opencv, grad_x, abs_grad_x;
-	start = clock();
-	cvtColor(image, gray_image_opencv, CV_BGR2GRAY);
-	Sobel(gray_image_opencv,grad_x,CV_8UC1,1,0,3,1,0,BORDER_DEFAULT);
-	convertScaleAbs(grad_x, abs_grad_x);
-	end = clock();
-	T2=diffclock(start,end);
-	cout<<" Result secuential"<<" At "<<T2<<",Seconds"<<endl;
-	cout<<"Total acceleration "<<T2/T1<<"X"<<endl;
+  d_convolution2d(image,In,h_Out,h_Mask,Mask_Width,Row,Col,3);
 	result_image.create(Col,Row,CV_8UC1);
 	result_image.data = h_Out;
 	imwrite("./outputs/1088328019.png",result_image);
+
 	return 0;
 }
+
+   
