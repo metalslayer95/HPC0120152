@@ -107,7 +107,7 @@ void sobel_Operator(Mat image,unsigned char *In,unsigned char *h_Out,char *h_Mas
     
 	end = clock();
   
-  union_Imagen <<<dimGrid,dimBlock>>>(out_x,out_y,d_sobelOut,Row,Col);
+  union_Imagen <<<dimGrid,dimBlock>>>(d_sobelOut_x,d_sobelOut_y,d_sobelOut,Row,Col);
   cudaMemcpy(h_Out,d_sobelOut,tamano_Gris,cudaMemcpyDeviceToHost);
   tiempo = ((double) (end - start)) / CLOCKS_PER_SEC;
 	printf("%f\n",tiempo);
@@ -145,4 +145,4 @@ main ()
 	return 0;
 }
 
-   
+
