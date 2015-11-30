@@ -7,6 +7,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #define HANDLE_ERROR( err ) ( HandleError( err, __FILE__, __LINE__ ) )
+#include "cuda.h"
 
 static void HandleError( cudaError_t err, const char *file, int line )
 {
