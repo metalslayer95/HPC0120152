@@ -1,0 +1,31 @@
+I = imread('imgPrueba.jpg');
+nFilters = 2;
+sigma = 10;
+
+blurFilter = fspecial('disk',sigma);
+Iblur = imfilter(I,blurFilter,'replicate');
+
+% motionFilter = fspecial('motion',20,45);
+motion
+motionBlur = imfilter(I,motionFilter,'replicate');
+
+gaussianFilter = fspecial('gaussian',3,45);
+gaussianBlur = imfilter(I,gaussianFilter,'replicate');
+
+subplot(1,nFilters+1,1)
+imshow(I)
+title('Original Image');
+
+subplot(1,nFilters+1,2)
+imshow(Iblur)
+title('Disk filtered image')
+% 
+% subplot(1,nFilters+1,3)
+% imshow(motionBlur)
+% title('Motion filtered image')
+
+
+subplot(1,nFilters+1,3)
+imshow(gaussianBlur)
+title('Gaussian filtered image')
+
