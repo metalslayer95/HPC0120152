@@ -1,9 +1,9 @@
-I = imread('imgPrueba10.jpg');
+I = imread('imgPrueba3.jpeg');
 nFilters = 3;
 %%%
 Ibw = rgb2gray(I);
-ind = find(Ibw < 135);
-ind2 = find(Ibw >= 135);
+ind = find(Ibw < 165);
+ind2 = find(Ibw >= 165);
 Ibw(ind) = 0;
 Ibw(ind2) = 255;
 b = bwperim(Ibw,8); 
