@@ -40,7 +40,7 @@ tic
 blurFilter = fspecial('disk',5);
 diskBlur = imfilter(Igpu,blurFilter,'replicate');
 x = find(Ibw > 0);
-whos x
+whos x,whos y
 pause
 diskBlur(x,y,:) = auxI(x,y,:);
 % for i=1:n%Isize(1)
