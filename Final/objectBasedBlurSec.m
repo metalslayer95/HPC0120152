@@ -35,30 +35,30 @@ hold on
 % end
 %%%%
 %%% Filtrado con sobel
-tic
-sobelFilter = fspecial('sobel');
-mask = padarray(2,[2 2]) - fspecial('gaussian' ,[5 5],2); % create unsharp mask
-sharpImage= imfilter(I,mask,'replicate');
-sobelImage = imfilter(sharpImage,sobelFilter,'replicate');
-timesobel = toc;
+% tic
+% sobelFilter = fspecial('sobel');
+% mask = padarray(2,[2 2]) - fspecial('gaussian' ,[5 5],2); % create unsharp mask
+% sharpImage= imfilter(I,mask,'replicate');
+% sobelImage = imfilter(sharpImage,sobelFilter,'replicate');
+% timesobel = toc
 
 %%%% aplicando blur con "disk"
 tic
 blurFilter = fspecial('disk',5);
 diskBlur = imfilter(I,blurFilter,'replicate');
-timedisk = toc;
+timedisk = toc
 
 %%% aplicando blur con "motion"
 tic
 motionFilter = fspecial('motion',20,45);
 motionBlur = imfilter(I,motionFilter,'replicate','conv');
-timemotion = toc;
+timemotion = toc
 
 %%% aplicando blur con "gaussian"
 tic
 gaussianFilter = fspecial('gaussian',5,10);
 gaussianBlur = imfilter(I,gaussianFilter,'replicate','conv');
-timegaussian = toc;
+timegaussian = toc
 
 figure(2)
 %%% graficando imagen original
