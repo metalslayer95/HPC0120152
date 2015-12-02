@@ -1,13 +1,14 @@
 clc;	% Clear command window.
 %clear;	% Delete all variables.
 close all;	% Close all figure windows except those created by imtool.
+imtool close all;	% Close all figure windows created by imtool.
 I = imread('imgPrueba1.jpg');
 auxI = I;
 nFilters = 3;
 [n,m,ch] = size(auxI);
 Ibw = rgb2gray(I);
-ind = find(Ibw < 165);
-ind2 = find(Ibw >= 165);
+ind = find(Ibw < 130);
+ind2 = find(Ibw >= 130);
 Ibw(ind) = 0;
 Ibw(ind2) = 255;
 b = bwperim(Ibw,8); 
@@ -17,6 +18,7 @@ Ibw = imfill(fill,'holes');
 figure(1)
 bI = binary(Ibw);
 imshow(bI);
+[x,y] = mask2poly(bl);
 
 
 %%%% aplicando blur con "disk"
@@ -32,7 +34,7 @@ timeaverage = toc
 
 %%% aplicando blur con "motion"
 tic
-motionFilter = fspecial('motion',5,270);
+motionFilter = fspecial('motion',20,0);
 motionBlur = objectBlur(I,motionFilter,bI);
 timemotion = toc
 
