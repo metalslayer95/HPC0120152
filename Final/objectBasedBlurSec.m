@@ -61,4 +61,3 @@ figure('name','Imagen con average','numberTitle','off')
 imshow(averageBlur)
 imwrite(averageBlur,'resultadosPruebas/averageBlurimgPrueba1.jpg');
 
-close all;

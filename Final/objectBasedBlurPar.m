@@ -3,7 +3,7 @@ clc;	% Clear command window.
 imtool close all;	% Close all figure windows created by imtool.
 gd = gpuDevice();
 reset(gd); % vaciar memoria usada gpu
-I =imread('imgPrueba1.jpg');
+I =imread('imagenesPrueba/imgPrueba1.jpg');
 Igpu = gpuArray(I);
 auxIgpu = Igpu;
 [n,m,ch] = size(auxIgpu);
