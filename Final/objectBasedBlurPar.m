@@ -1,5 +1,8 @@
+clc;	% Clear command window.
+%clear;	% Delete all variables.
+imtool close all;	% Close all figure windows created by imtool.
 gd = gpuDevice();
-reset(gd);
+reset(gd); % vaciar memoria usada gpu
 I =imread('imgPrueba1.jpg');
 Igpu = gpuArray(I);
 auxIgpu = Igpu;
@@ -15,8 +18,6 @@ Ibwgpu(ind2) = 255;
 
 Ibw = gather(Ibwgpu); % se pasa nuevamente a memoria de CPU para ejecutar bwperim
 b = bwperim(Ibw,8);  % se encuentra el perimetro de los objetos en la imagen
-%[b, num]=CapBinaria(Ibw);         %Obtener imagen en FORMATO BINARIO
-%b = gpuArray(b);
 [B,L] = bwboundaries(b,'holes');  %Agujeros negros
 Lgpu = gpuArray(L);
 figure(1)
@@ -24,42 +25,30 @@ fillgpu= imfill(Lgpu,'holes');          %Lenar agujeros
 Ibwgpu = imfill(fillgpu,'holes');
 imshow(Ibwgpu);
 Ibw = gather(Ibwgpu);
-
-
+bIgpu = gpuArray(binary(Ibwgpu));
 %%%% aplicando blur con "disk"
 disp('Empezando disk');
 tic
-blurFilter = fspecial('disk',5);
-
-% diskBlur = imfilter(Igpu,blurFilter,'replicate');
-% diskBlur = gather(diskBlur);
-% for i=1:n
-%      for j =1:m
-%          if (Ibwgpu(i,j) > 0)
-%              diskBlur(i,j,:) = auxI(i,j,:);
-%          end
-%      end
-% end
+diskFilter = gpuArray(fspecial('disk',5));
+diskBlur = objectBlur(Igpu,diskFilter,bIgpu);
 diskBlur = gather(diskBlur);
 wait(gd);
 timediskGPU = toc
 disp('Terminando disk');
-pause
-disp('Empezando motion');
-%%% aplicando blur con "motion"
+
+%%% aplicando blur con average filter
 tic
-motionFilter = fspecial('motion',20,45);
-motionBlur = imfilter(Igpu,motionFilter,'replicate','conv');
-for i=1:n%Isize(1)
-     for j =1:m%Isize(2)
-         if (Ibwgpu(i,j) > 0)
-             motionBlur(i,j,:) = auxIgpu(i,j,:);
-         end
-     end
-      if ((mod(i,10)) == 0)
-         disp(i);
-      end
-end
+averageFilter = gpuArray(fspecial('average',[3 3]));
+averageBlur = objectBlur(Igpu,averageFilter,bIgpu);
+averageBlur = gather(averageBlur);
+wait(gd);
+timeaverageGPU = toc
+
+%%% aplicando blur con "motion"
+disp('Empezando motion');
+tic
+motionFilter = gpuArray(fspecial('motion',20,45));
+motionBlur = objectBlur(Igpu,motionFilter,bIgpu);
 motionBlur = gather(motionBlur);
 wait(gd);
 timemotionGPU = toc
@@ -68,54 +57,40 @@ disp('Terminando motion');
 %%% aplicando blur con "gaussian"
 disp('Empezando gaussian');
 tic
-gaussianFilter = fspecial('gaussian',5,10);
-gaussianBlur = imfilter(Igpu,gaussianFilter,'replicate','conv');
-for i=1:n%Isize(1)
-     for j =1:m%Isize(2)
-         if (Ibw(i,j) > 0)
-             gaussianBlur(i,j,:) = auxIgpu(i,j,:);
-         end
-     end
-     if ((mod(i,10)) == 0)
-         disp(i);
-      end
-end
+gaussianFilter = gpuArray(fspecial('gaussian',5,10));
+gaussianBlur = objectBlur(Igpu,gaussianFilter,bIgpu);
 gaussianBlur = gather(gaussianBlur);
 wait(gd);
 timegaussianGPU = toc
 disp('Terminando gaussian');
 
+
+%%% graficando
+
 figure(2)
 %%% graficando imagen original
 imshow(I)
 title('Original');
+
 figure(3)
-%%% graficando imagen con disk
-subplot(1,nFilters,1)
+% %%% graficando imagen con disk
 imshow(diskBlur)
 title('Disk')
 
-%%% graficando imagen con motion
-subplot(1,nFilters,2)
+figure(4)
+% %%% graficando imagen con motion
 imshow(motionBlur)
 title('Motion')
 
+
+
+figure(5)
 %%% graficando imagen con gaussian
-subplot(1,nFilters,3)
 imshow(gaussianBlur)
 title('Gaussian')
 
-%%%%
-% figure(3)
-% Ibw = rgb2gray(I);
-% ind = find(Ibw < 185);
-% ind2 = find(Ibw >= 185);
-% Ibw(ind) = 0;
-% Ibw(ind2) = 255;
-% I2 = bwperim(Ibw,8);
-% imshow(I2);
-%hold on
-%plot(I2);
 
-
-
+figure(6)
+%%% graficando imagen con gaussian
+imshow(averageBlur)
+title('Average')
