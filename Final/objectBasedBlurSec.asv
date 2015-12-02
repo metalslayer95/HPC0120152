@@ -1,24 +1,22 @@
 clc;	% Clear command window.
 %clear;	% Delete all variables.
 close all;	% Close all figure windows except those created by imtool.
-imtool close all;	% Close all figure windows created by imtool.
 I = imread('imgPrueba1.jpg');
 auxI = I;
 nFilters = 3;
 [n,m,ch] = size(auxI);
 Ibw = rgb2gray(I);
-ind = find(Ibw < 130);
-ind2 = find(Ibw >= 130);
+ind = find(Ibw < 165);
+ind2 = find(Ibw >= 165);
 Ibw(ind) = 0;
 Ibw(ind2) = 255;
 b = bwperim(Ibw,8); 
 [B,L]= bwboundaries(b,'holes');  %Agujeros negros
 fill=imfill(L,'holes');          %Llenar agujeros
 Ibw = imfill(fill,'holes');
-figure(1)
+figure('name','Mascara objeto','numberTitle','off')
 bI = binary(Ibw);
 imshow(bI);
-[x,y] = mask2poly(bl);
 
 
 %%%% aplicando blur con "disk"
@@ -34,7 +32,7 @@ timeaverage = toc
 
 %%% aplicando blur con "motion"
 tic
-motionFilter = fspecial('motion',20,0);
+motionFilter = fspecial('motion',5,270);
 motionBlur = objectBlur(I,motionFilter,bI);
 timemotion = toc
 
@@ -44,32 +42,19 @@ gaussianFilter = fspecial('gaussian',5,10);
 gaussianBlur = objectBlur(I,gaussianFilter,bI);
 timegaussian = toc
 
-figure(2)
-%%% graficando imagen original
+figure('name','Imagen original','numberTitle','off')
 imshow(I)
-title('Original');
-figure(3)
-% %%% graficando imagen con disk
-% %subplot(1,nFilters,1)
+
+figure('name','Imagen con disk blur','numberTitle','off')
 imshow(diskBlur)
-title('Disk')
+imwrite(diskBlur,'diskBlurimgPrueba1.jpg')
 
-figure(4)
-% %%% graficando imagen con motion
-% subplot(1,nFilters,2)
+figure('name','Imagen con motion blur','numberTitle','off')
 imshow(motionBlur)
-title('Motion')
 
-figure(5)
-%%% graficando imagen con gaussian
-% subplot(1,nFilters,3)
+figure('name','Imagen con gaussian','numberTitle','off')
 imshow(gaussianBlur)
-title('Gaussian')
 
-
-figure(6)
-%%% graficando imagen con gaussian
-% subplot(1,nFilters,3)
+figure('name','Imagen con average','numberTitle','off')
 imshow(averageBlur)
-title('Average')
 

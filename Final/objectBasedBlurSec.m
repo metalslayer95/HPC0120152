@@ -1,7 +1,7 @@
 clc;	% Clear command window.
 %clear;	% Delete all variables.
 close all;	% Close all figure windows except those created by imtool.
-I = imread('imgPrueba1.jpg');
+I = imread('imagenesPrueba/imgPrueba1.jpg');
 auxI = I;
 nFilters = 3;
 [n,m,ch] = size(auxI);
@@ -14,14 +14,14 @@ b = bwperim(Ibw,8);
 [B,L]= bwboundaries(b,'holes');  %Agujeros negros
 fill=imfill(L,'holes');          %Llenar agujeros
 Ibw = imfill(fill,'holes');
-figure(1)
+figure('name','Mascara objeto','numberTitle','off')
 bI = binary(Ibw);
 imshow(bI);
-
+imwrite(bI,'resultadosPruebas/maskimgPrueba1.jpg');
 
 %%%% aplicando blur con "disk"
 tic
-diskFilter = fspecial('disk',5);
+diskFilter = fspecial('disk',10);
 diskBlur = objectBlur(I,diskFilter,bI);
 timedisk = toc
 %%%% aplicando blur con "average"
@@ -32,7 +32,7 @@ timeaverage = toc
 
 %%% aplicando blur con "motion"
 tic
-motionFilter = fspecial('motion',5,270);
+motionFilter = fspecial('motion',10,270);
 motionBlur = objectBlur(I,motionFilter,bI);
 timemotion = toc
 
@@ -42,32 +42,23 @@ gaussianFilter = fspecial('gaussian',5,10);
 gaussianBlur = objectBlur(I,gaussianFilter,bI);
 timegaussian = toc
 
-figure(2)
-%%% graficando imagen original
+figure('name','Imagen original','numberTitle','off')
 imshow(I)
-title('Original');
-figure(3)
-% %%% graficando imagen con disk
-% %subplot(1,nFilters,1)
+
+figure('name','Imagen con disk blur','numberTitle','off')
 imshow(diskBlur)
-title('Disk')
+imwrite(diskBlur,'resultadosPruebas/diskBlurimgPrueba1.jpg');
 
-figure(4)
-% %%% graficando imagen con motion
-% subplot(1,nFilters,2)
+figure('name','Imagen con motion blur','numberTitle','off')
 imshow(motionBlur)
-title('Motion')
+imwrite(motionBlur,'resultadosPruebas/motionBlurimgPrueba1.jpg');
 
-figure(5)
-%%% graficando imagen con gaussian
-% subplot(1,nFilters,3)
+figure('name','Imagen con gaussian','numberTitle','off')
 imshow(gaussianBlur)
-title('Gaussian')
+imwrite(gaussianBlur,'resultadosPruebas/gaussianBlurimgPrueba1.jpg');
 
-
-figure(6)
-%%% graficando imagen con gaussian
-% subplot(1,nFilters,3)
+figure('name','Imagen con average','numberTitle','off')
 imshow(averageBlur)
-title('Average')
+imwrite(averageBlur,'resultadosPruebas/averageBlurimgPrueba1.jpg');
 
+close all;

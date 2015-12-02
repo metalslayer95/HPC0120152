@@ -11,6 +11,8 @@ function [output] = Bokeh(input, radius)
 kernel = fspecial('disk',radius);       % Create disk kernel
 disp('Select area to keep in focus!')   % Display message to user
 mask = roipoly(input);           % User selects area of interest
+figure(1)
+imshow(mask);
 output = [];                     % Start with an empty image
 for i = 1:size(input,3)          % Covering the case of color images
     cropped = input(:,:,i);      % Perform per-channel processing
@@ -20,7 +22,7 @@ for i = 1:size(input,3)          % Covering the case of color images
     channel(mask==0) = cropped(mask==0); % Only keep ROI unaffected
     output = cat(3,output,channel);  % Concatenate channels
 end
-figure(1)
+figure(2)
 imshow(input)
 figure(2)
 imshow(output)

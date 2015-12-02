@@ -11,8 +11,8 @@ Isize = gpuArray([n,m,ch]);
 nFilters = 3;
 %%%
 Ibwgpu = rgb2gray(Igpu);
-ind = find(Ibwgpu < 135);
-ind2 = find(Ibwgpu >= 135);
+ind = find(Ibwgpu < 165);
+ind2 = find(Ibwgpu >= 165);
 Ibwgpu(ind) = 0;
 Ibwgpu(ind2) = 255;
 
@@ -20,9 +20,9 @@ Ibw = gather(Ibwgpu); % se pasa nuevamente a memoria de CPU para ejecutar bwperi
 b = bwperim(Ibw,8);  % se encuentra el perimetro de los objetos en la imagen
 [B,L] = bwboundaries(b,'holes');  %Agujeros negros
 Lgpu = gpuArray(L);
-figure(1)
 fillgpu= imfill(Lgpu,'holes');          %Lenar agujeros
 Ibwgpu = imfill(fillgpu,'holes');
+figure('name','Mascara objeto','numberTitle','off')
 imshow(Ibwgpu);
 Ibw = gather(Ibwgpu);
 bIgpu = gpuArray(binary(Ibwgpu));
@@ -47,7 +47,7 @@ timeaverageGPU = toc
 %%% aplicando blur con "motion"
 disp('Empezando motion');
 tic
-motionFilter = gpuArray(fspecial('motion',20,45));
+motionFilter = gpuArray(fspecial('motion',20,270));
 motionBlur = objectBlur(Igpu,motionFilter,bIgpu);
 motionBlur = gather(motionBlur);
 wait(gd);
@@ -67,30 +67,17 @@ disp('Terminando gaussian');
 
 %%% graficando
 
-figure(2)
-%%% graficando imagen original
+figure('name','Imagen original','numberTitle','off')
 imshow(I)
-title('Original');
 
-figure(3)
-% %%% graficando imagen con disk
+figure('name','Imagen con disk blur','numberTitle','off')
 imshow(diskBlur)
-title('Disk')
 
-figure(4)
-% %%% graficando imagen con motion
+figure('name','Imagen con motion blur','numberTitle','off')
 imshow(motionBlur)
-title('Motion')
 
-
-
-figure(5)
-%%% graficando imagen con gaussian
+figure('name','Imagen con gaussian','numberTitle','off')
 imshow(gaussianBlur)
-title('Gaussian')
 
-
-figure(6)
-%%% graficando imagen con gaussian
+figure('name','Imagen con average','numberTitle','off')
 imshow(averageBlur)
-title('Average')
